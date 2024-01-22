@@ -135,7 +135,7 @@ hardware_interface::CallbackReturn DiffBotSystemHardware::on_activate(
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
   RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), "Activating ...please wait...");
 
-  comms_.connect(cfg_.device, cfg_.baud_rate, cfg_.timeout_ms);
+  esp32_comms_.connect(cfg_.device, cfg_.timeout_ms);
 
   RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), "Successfully activated!");
 
@@ -148,7 +148,8 @@ hardware_interface::CallbackReturn DiffBotSystemHardware::on_deactivate(
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
   RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), "Deactivating ...please wait...");
 
-  comms_.disconnect();
+  // comms_.disconnect();
+  esp32_comms_.disconnect();
 
   RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), "Successfully deactivated!");
 
@@ -158,7 +159,8 @@ hardware_interface::CallbackReturn DiffBotSystemHardware::on_deactivate(
 hardware_interface::return_type DiffBotSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-  comms_.read_encoder_values(wheel_l_.enc, wheel_r_.enc);
+  try{
+  esp32_comms_.read_encoder_values(wheel_l_.enc, wheel_r_.enc);
 
   double delta_seconds = period.seconds();
 
@@ -169,16 +171,23 @@ hardware_interface::return_type DiffBotSystemHardware::read(
   pos_prev = wheel_r_.pos;
   wheel_r_.pos = wheel_r_.calc_enc_angle();
   wheel_r_.vel = (wheel_r_.pos - pos_prev)/ delta_seconds;
-
+  }
+  catch(...){
+    
+  }
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type ros2_control_demo_example_2 ::DiffBotSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  int motor_l_couunts_per_loop = wheel_l_.cmd /wheel_l_.rads_per_count / cfg_.loop_rate;
-  int motor_r_couunts_per_loop = wheel_r_.cmd /wheel_r_.rads_per_count / cfg_.loop_rate;
-  comms_.set_motor_values(motor_l_couunts_per_loop,motor_r_couunts_per_loop);
+  if(wheel_l_.cmd!=0){
+  RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), (std::to_string(wheel_l_.cmd)).c_str());
+  RCLCPP_INFO(rclcpp::get_logger("DiffBotSystemHardware"), (std::to_string(wheel_r_.cmd)).c_str());
+  }
+  int motor_l_counts_per_loop = wheel_l_.cmd /wheel_l_.rads_per_count / cfg_.loop_rate;
+  int motor_r_counts_per_loop = wheel_r_.cmd /wheel_r_.rads_per_count / cfg_.loop_rate;
+  esp32_comms_.set_motor_values(motor_l_counts_per_loop,motor_r_counts_per_loop);
 
   return hardware_interface::return_type::OK;
 }

@@ -32,7 +32,8 @@
 
 #include "ros2_control_demo_example_2/visibility_control.h"
 
-#include "ros2_control_demo_example_2/arduino_comms.hpp"
+// #include "ros2_control_demo_example_2/arduino_comms.hpp"
+#include "ros2_control_demo_example_2/esp32_comms.hpp"
 #include "ros2_control_demo_example_2/wheel.hpp"
 
 namespace ros2_control_demo_example_2
@@ -81,7 +82,8 @@ public:
 
 private:
   // Parameters for the DiffBot simulation
-  ArduinoComms comms_;
+  // ArduinoComms comms_;
+  Esp32Comms esp32_comms_;
   Config cfg_;
   Wheel wheel_l_;
   Wheel wheel_r_;
